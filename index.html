@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitácora del Cuidado - Teología y Educación</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,600&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --azul-oscuro: #0f2027;
+            --azul-medio: #203a43;
+            --azul-claro: #2c5364;
+            --dorado: #d4af37;
+            --dorado-texto: #8a6d1f;
+            --texto-oscuro: #2c3e50;
+            --fondo-claro: #f8f9fa;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            line-height: 1.7;
+            color: var(--texto-oscuro);
+            background-color: var(--fondo-claro);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        #progressBar {
+            position: fixed;
+            top: 0; left: 0;
+            height: 4px; width: 0%;
+            background: linear-gradient(90deg, var(--dorado), var(--azul-claro));
+            z-index: 200;
+            transition: width .08s linear;
+        }
+
+        #navbar {
+            position: sticky; top: 4px; z-index: 150;
+            background: rgba(255,255,255,0.82);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(15,32,39,0.08);
+        }
+        .nav-inner {
+            max-width: 1000px; margin: 0 auto; position: relative;
+            display: flex; gap: 2px; justify-content: center; flex-wrap: wrap;
+            padding: 10px 20px;
+        }
+        .nav-inner a {
+            position: relative; z-index: 2; text-decoration: none;
+            color: var(--texto-oscuro); font-size: 0.82em; font-weight: 500;
+            padding: 8px 16px; border-radius: 20px; transition: color .3s ease;
+            white-space: nowrap;
+        }
+        .nav-inner a.active { color: white; }
+        #navIndicator {
+            position: absolute; top: 6px; left: 0; height: calc(100% - 12px);
+            background: var(--azul-oscuro); border-radius: 20px; width: 0;
+            transition: transform .4s cubic-bezier(.65,0,.35,1), width .4s cubic-bezier(.65,0,.35,1);
+            box-shadow: 0 4px 12px rgba(15,32,39,0.3);
+        }
+
+        #cursorGlow {
+            position: fixed; width: 300px; height: 300px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(212,175,55,0.18) 0%, transparent 70%);
+            pointer-events: none; z-index: 1; transform: translate(-50%,-50%);
+            opacity: 0; transition: opacity .4s ease;
+        }
+
+        .particle {
+            position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
+            background: radial-gradient(circle, var(--dorado) 0%, transparent 72%);
+            filter: blur(1px); opacity: 0.28;
+        }
+        .p1 { width: 160px; height: 160px; top: 12%; left: -50px; animation: floatA 20s ease-in-out infinite; }
+        .p2 { width: 110px; height: 110px; bottom: 18%; right: -35px; animation: floatB 24s ease-in-out infinite; }
+        .p3 { width: 80px; height: 80px; top: 55%; left: 6%; animation: floatA 28s ease-in-out infinite reverse; }
+        @keyframes floatA { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(35px,-45px); } }
+        @keyframes floatB { 0%,100%{ transform: translate(0,0); } 50%{ transform: translate(-30px,40px); } }
+
+        header {
+            position: relative;
+            color: white;
+            padding: 110px 20px;
+            text-align: center;
+            border-bottom: 8px solid var(--dorado);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header-bg-wrap { position: absolute; inset: 0; z-index: 0; }
+        .header-bg {
+            width: 100%; height: 100%; object-fit: cover; position: absolute; inset: 0;
+            animation: kenburns 20s ease-in-out infinite alternate;
+        }
+        .header-overlay {
+            position: absolute; inset: 0;
+            background: linear-gradient(to right, rgba(15, 32, 39, 0.9), rgba(32, 58, 67, 0.8), rgba(44, 83, 100, 0.9));
+        }
+        @keyframes kenburns { from { transform: scale(1); } to { transform: scale(1.14); } }
+        .header-content { position: relative; z-index: 2; }
+
+        header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        header h1 .line1, header h1 .line2 {
+            display: inline-block; opacity: 0;
+            animation: fadeInDown 1s ease-out forwards;
+        }
+        header h1 .line1 { animation-delay: .2s; }
+        header h1 .line2 { animation-delay: .55s; }
+
+        .datos-estudiante {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            display: inline-block;
+            padding: 20px 40px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: fadeInUp 1.2s ease-out 0.9s both;
+        }
+
+        .datos-estudiante p { margin: 8px 0; font-weight: 300; font-size: 1.1em; }
+        .datos-estudiante strong { color: var(--dorado); font-weight: 500; }
+
+        .container {
+            max-width: 1000px;
+            margin: -40px auto 40px auto;
+            position: relative;
+            z-index: 10;
+            padding: 0 20px;
+        }
+
+        .seccion {
+            background: white;
+            padding: 50px;
+            margin-bottom: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .seccion:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+
+        .badge {
+            position: absolute; top: -22px; left: 34px;
+            width: 46px; height: 46px; border-radius: 50%;
+            background: var(--azul-oscuro); color: var(--dorado);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Playfair Display', serif; font-weight: 600; font-size: 1.15em;
+            border: 2px solid var(--dorado);
+            box-shadow: 0 6px 14px rgba(15,32,39,0.3);
+            transition: transform .3s ease;
+        }
+        .seccion:hover .badge { transform: rotate(-8deg) scale(1.08); }
+
+        h2 {
+            font-family: 'Playfair Display', serif;
+            color: var(--azul-medio);
+            font-size: 2em;
+            border-left: 5px solid var(--dorado);
+            padding-left: 15px;
+            margin-top: 0;
+        }
+
+        .reveal {
+            opacity: 0;
+            transition: opacity .9s cubic-bezier(0.22,0.7,0.2,1), transform .9s cubic-bezier(0.22,0.7,0.2,1);
+        }
+        .reveal[data-reveal="up"]   { transform: translateY(55px); }
+        .reveal[data-reveal="left"] { transform: translateX(-70px); }
+        .reveal[data-reveal="right"]{ transform: translateX(70px); }
+        .reveal[data-reveal="zoom"] { transform: scale(0.85); }
+        .reveal.active { opacity: 1; transform: none; }
+
+        .layout-mixto { display: flex; gap: 40px; align-items: center; }
+        .layout-mixto.inverso { flex-direction: row-reverse; }
+        .texto-mitad { flex: 1; }
+
+        .imagen-mitad {
+            flex: 1; border-radius: 15px; overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            transition: transform 0.18s ease-out, box-shadow .3s ease;
+            will-change: transform;
+        }
+        .imagen-mitad img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .tarjeta-destacada {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(212, 175, 55, 0.05) 100%);
+            border-left: 4px solid var(--dorado);
+            padding: 25px;
+            border-radius: 0 15px 15px 0;
+            font-style: italic;
+            margin-top: 20px;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .tarjeta-destacada:hover {
+            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(212, 175, 55, 0.1) 100%);
+            transform: translateX(10px);
+        }
+        .tarjeta-destacada strong {
+            display: block; color: var(--azul-oscuro); font-style: normal;
+            font-family: 'Playfair Display', serif; font-size: 1.3em; margin-bottom: 10px;
+        }
+
+        .autores-intro { color: #667; font-size: 0.95em; margin-bottom: 22px; }
+        .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+        .chip {
+            border: 2px solid var(--azul-medio); background: white; color: var(--azul-medio);
+            padding: 9px 20px; border-radius: 30px; font-weight: 500; font-size: 0.92em;
+            cursor: pointer; transition: all .3s ease; font-family: 'Poppins', sans-serif;
+        }
+        .chip:hover { background: var(--azul-claro); color: white; transform: translateY(-2px); }
+        .chip.active { background: var(--azul-oscuro); color: var(--dorado); border-color: var(--azul-oscuro); box-shadow: 0 6px 16px rgba(15,32,39,0.28); }
+
+        .autor-panel {
+            background: var(--fondo-claro); border-left: 4px solid var(--azul-claro);
+            padding: 22px 26px; border-radius: 0 15px 15px 0; min-height: 78px;
+            display: flex; align-items: center;
+        }
+        .autor-panel p { margin: 0; font-style: italic; color: var(--texto-oscuro); transition: opacity .22s ease, transform .22s ease; }
+        .autor-panel p.fade { opacity: 0; transform: translateY(6px); }
+
+        .referencias p {
+            padding-left: 40px; text-indent: -40px; margin: 10px 0; font-size: 0.9em; color: #555;
+            transition: color 0.3s ease, opacity .5s ease, transform .5s ease;
+            opacity: 0; transform: translateY(14px);
+        }
+        .referencias.active p { opacity: 1; transform: none; }
+        .referencias p:hover { color: var(--azul-medio); }
+
+        #backToTop {
+            position: fixed; bottom: 26px; right: 26px; width: 50px; height: 50px;
+            border-radius: 50%; background: var(--azul-oscuro); color: var(--dorado);
+            border: none; font-size: 1.3em; cursor: pointer; z-index: 120;
+            box-shadow: 0 8px 20px rgba(15,32,39,0.35);
+            opacity: 0; transform: translateY(20px) scale(0.8); pointer-events: none;
+            transition: opacity .3s ease, transform .3s ease, background .3s ease, color .3s ease;
+        }
+        #backToTop.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        #backToTop:hover { background: var(--dorado); color: var(--azul-oscuro); transform: translateY(-4px) scale(1.06); }
+
+        footer {
+            text-align: center; font-family: 'Poppins', sans-serif; font-size: 0.85em;
+            color: #8a8a8a; padding: 30px 20px 50px;
+        }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp   { from { opacity: 0; transform: translateY(30px); }  to { opacity: 1; transform: translateY(0); } }
+
+        @media (prefers-reduced-motion: reduce) {
+            .header-bg, .particle, .reveal, .imagen-mitad, .datos-estudiante, header h1 .line1, header h1 .line2 { animation: none !important; transition: none !important; opacity: 1 !important; transform: none !important; }
+        }
+
+        @media (max-width: 768px) {
+            .layout-mixto, .layout-mixto.inverso { flex-direction: column; }
+            header h1 { font-size: 2.2em; }
+            .seccion { padding: 34px 22px; }
+            .container { margin-top: -20px; }
+            .nav-inner a { font-size: 0.75em; padding: 7px 12px; }
+            #cursorGlow, .particle { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="progressBar"></div>
+    <div id="cursorGlow"></div>
+    <div class="particle p1"></div>
+    <div class="particle p2"></div>
+    <div class="particle p3"></div>
+
+    <nav id="navbar">
+        <div class="nav-inner">
+            <span id="navIndicator"></span>
+            <a href="#intro">Introducción</a>
+            <a href="#autores">Autores</a>
+            <a href="#eje1">Eje 1</a>
+            <a href="#eje2">Eje 2</a>
+            <a href="#eje3">Eje 3</a>
+            <a href="#conclusion">Conclusión</a>
+            <a href="#referencias">Referencias</a>
+        </div>
+    </nav>
+
+    <header>
+        <div class="header-bg-wrap">
+            <img class="header-bg" src="https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?q=80&w=1920" alt="">
+            <div class="header-overlay"></div>
+        </div>
+        <div class="header-content">
+            <h1><span class="line1">Bitácora del cuidado:</span><br><span class="line2">Narrativas teológico-emocionales</span></h1>
+            <div class="datos-estudiante">
+                <p><strong>Estudiante:</strong> Jesús Alejandro Del Castillo Rincón</p>
+                <p><strong>Curso:</strong> Fundamentos Teóricos y Éticos de las Competencias Socioemocionales</p>
+                <p><strong>Institución:</strong> Universidad Mariana, Licenciatura en Teología</p>
+                <p><strong>Fecha:</strong> 15 de septiembre de 2026</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div class="seccion reveal" data-reveal="up" id="intro">
+            <h2>Introducción</h2>
+            <div class="layout-mixto">
+                <div class="texto-mitad">
+                    <p>El presente documento se constituye como una bitácora reflexiva orientada a analizar los fundamentos teóricos, éticos y teológicos que configuran las competencias socioemocionales en el contexto educativo colombiano. En el marco de la formación del educador teólogo, resulta imperativo trascender la mera transmisión de conocimientos para adoptar una perspectiva integral que sitúe el bienestar, la ética del cuidado y la espiritualidad en el centro de la praxis docente.</p>
+                    <p>Para ello, el análisis se estructura en tres ejes temáticos fundamentales: la conceptualización de las competencias socioemocionales, la educación emocional como un proceso pedagógico, y la ética del cuidado entrelazada con la espiritualidad del acompañamiento. Esta reflexión responde a los desafíos del Proyecto Educativo Institucional (PEI) y los Objetivos de Desarrollo Sostenible.</p>
+                    <p>Este ejercicio académico se nutre, además, de la observación realizada en el I.E.M. María Goretti, institución educativa de carácter femenino de la ciudad de Pasto (Nariño), cuyo cotidiano escolar permite constatar que estas categorías teóricas no son abstracciones ajenas al aula, sino dinámicas que atraviesan cada jornada: la organización de una fila, la mediación de un conflicto entre compañeras o el acompañamiento de una estudiante en un momento de incertidumbre.</p>
+                </div>
+                <div class="imagen-mitad">
+                    <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=800" alt="Estudiantes universitarios colaborando en un entorno de aprendizaje empático">
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion reveal" data-reveal="zoom" id="autores">
+            <h2>Voces que dialogan en esta bitácora</h2>
+            <p class="autores-intro">Toca cada nombre para recordar, en una frase, la idea que aporta a esta reflexión.</p>
+            <div class="chips">
+                <button class="chip active" data-autor="goleman" aria-pressed="true">Goleman</button>
+                <button class="chip" data-autor="bisquerra" aria-pressed="false">Bisquerra</button>
+                <button class="chip" data-autor="noddings" aria-pressed="false">Noddings</button>
+                <button class="chip" data-autor="boff" aria-pressed="false">Boff</button>
+                <button class="chip" data-autor="gutierrez" aria-pressed="false">Gutiérrez</button>
+                <button class="chip" data-autor="freire" aria-pressed="false">Freire</button>
+            </div>
+            <div class="autor-panel">
+                <p id="autorTexto">Daniel Goleman (1996) identificó cinco dimensiones de la inteligencia emocional —autoconocimiento, autorregulación, motivación, empatía y habilidades sociales— con más peso en la vida cotidiana que el coeficiente intelectual.</p>
+            </div>
+        </div>
+
+        <div class="seccion reveal" data-reveal="left" id="eje1">
+            <span class="badge">1</span>
+            <h2>Eje Temático 1: Conceptualización de las competencias socioemocionales</h2>
+            <p>Las competencias socioemocionales representan un constructo multidimensional indispensable para el desarrollo integral del ser humano. Desde los postulados pioneros de Goleman (1996), se comprende que dimensiones como el autoconocimiento, la autorregulación, la motivación, la empatía y las habilidades sociales superan el impacto del coeficiente intelectual en el éxito personal y colectivo.</p>
+            <p>En el contexto colombiano, estas competencias adquieren una relevancia sociopolítica insoslayable. Su desarrollo es fundamental para materializar los propósitos de la Ley 1620 de 2013, la cual busca prevenir la violencia y fomentar ambientes escolares seguros. Formar en autorregulación y empatía se convierte en una herramienta esencial para la reconstrucción del tejido social, interactuando desde el respeto por la diferencia.</p>
+            <p>Este reconocimiento no es ajeno al ordenamiento educativo colombiano: el artículo 67 de la Constitución Política de Colombia (1991) consagra la educación como un derecho fundamental orientado a la formación integral del ser humano, mientras que la Ley 115 de 1994 establece explícitamente el desarrollo armónico e integral del estudiante —y no solo su rendimiento académico— como finalidad última de todo proceso educativo. En instituciones como el I.E.M. María Goretti, colegio de carácter femenino situado en la ciudad de Pasto (Nariño), este mandato normativo se traduce en la necesidad cotidiana de acompañar a las estudiantes no solo en su desempeño escolar, sino en la construcción de una identidad emocional sólida, coherente además con el Proyecto Educativo Institucional que orienta, desde la Universidad Mariana, la formación del futuro educador teólogo.</p>
+
+            <div class="tarjeta-destacada">
+                <strong>Nota de observación (I.E.M. María Goretti)</strong>
+                Durante una jornada de convivencia observada en grado noveno, dos estudiantes enfrentadas por un malentendido surgido en redes sociales logran, con la mediación espontánea de una compañera, nombrar lo que sienten, bajar el tono de la discusión y proponer una disculpa mutua antes de que el conflicto escale. La escena, breve y aparentemente menor, condensa en la práctica las cinco dimensiones descritas por Goleman —autoconocimiento, autorregulación, motivación, empatía y habilidad social— y recuerda que estas competencias no se enseñan únicamente con discursos, sino que se modelan y se practican en los intersticios de la vida escolar.
+            </div>
+        </div>
+
+        <div class="seccion reveal" data-reveal="right" id="eje2">
+            <span class="badge">2</span>
+            <h2>Eje Temático 2: La educación emocional como proceso pedagógico</h2>
+            <div class="layout-mixto inverso">
+                <div class="texto-mitad">
+                    <p>La educación emocional no debe interpretarse como una intervención aislada, sino como un proceso pedagógico continuo, sistemático y transversal. Siguiendo a Bisquerra (2009), este proceso busca el desarrollo de habilidades que favorezcan el bienestar personal y social, influyendo directamente en dinámicas cognitivas como la atención y la motivación.</p>
+                    <p>El rol del educador teólogo muta hacia el de un <strong>mediador emocional</strong>. El docente está llamado a generar climas afectivos que promuevan la resiliencia.</p>
+                    <p>Esta transversalidad curricular encuentra respaldo normativo en la Ley 115 de 1994, que exige articular el desarrollo cognitivo con el desarrollo ético, afectivo y social del estudiante como componentes inseparables de la formación integral. Encuentra, además, respaldo empírico en la neurociencia educativa contemporánea, cuyos hallazgos confirman que la disposición emocional con la que una estudiante llega al aula condiciona de manera directa su capacidad de atención, su memoria y su motivación para aprender. Ignorar esta dimensión no solo desatiende el bienestar de la estudiante: compromete, en sentido estricto, la posibilidad misma del aprendizaje.</p>
+
+                    <div class="tarjeta-destacada">
+                        <strong>Diario de clase reflexivo (I.E.M. María Goretti)</strong>
+                        Cuando una docente abre el espacio preguntando "¿Cómo llegan hoy?" y sostiene el silencio frente a la narración de un conflicto familiar por parte de una estudiante, no está perdiendo tiempo académico. Está validando las emociones y construyendo un entorno relacional seguro; condición <em>sine qua non</em> para el aprendizaje significativo. En un colegio femenino como este, donde confluyen la presión académica, las dinámicas entre pares y las expectativas familiares sobre el proyecto de vida de las jóvenes, ese breve gesto pedagógico —abrir un espacio para nombrar la emoción antes de exigir contenido— adquiere un peso que trasciende ampliamente la duración de la clase.
+                    </div>
+
+                    <p>Formar en esta dirección es coherente con la visión humanista cristiana que orienta el Proyecto Educativo Institucional de la Universidad Mariana, para la cual la educación emocional no compite con el rigor académico, sino que lo hace posible: solo una estudiante que se siente vista, escuchada y tomada en serio puede disponerse plenamente al aprendizaje. En este sentido, cada gesto de mediación emocional en el aula es también, de manera silenciosa, un gesto de acompañamiento evangelizador, entendido no como adoctrinamiento, sino como testimonio de un amor que se hace presencia concreta.</p>
+                </div>
+                <div class="imagen-mitad">
+                    <img src="https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=800" alt="Docente escuchando atentamente a un estudiante, reflejando educación emocional">
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion reveal" data-reveal="zoom" id="eje3">
+            <span class="badge">3</span>
+            <h2>Eje Temático 3: Ética del cuidado y espiritualidad del acompañamiento</h2>
+            <div class="layout-mixto">
+                <div class="texto-mitad">
+                    <p>La dimensión ética y espiritual otorga su sentido más profundo a la educación socioemocional. La ética del cuidado, postulada por Noddings (2003), sitúa el vínculo afectivo y la reciprocidad en el núcleo de la praxis educativa. Educar se transforma en un acto relacional donde se reconoce y atiende la fragilidad del otro.</p>
+                    <p>Desde una teología encarnada, Boff (2002) sostiene que el cuidado es la actitud primordial para resistir la deshumanización. Simultáneamente, el acompañamiento no puede desligarse de la justicia social y la opción preferencial por los más vulnerables.</p>
+                    <p>Esta espiritualidad del acompañamiento adquiere una densidad particular en un contexto como el de Nariño, departamento que ha vivido de cerca los efectos del conflicto armado y de la migración interna hacia sus cabeceras municipales. El artículo 67 de la Constitución Política de Colombia (1991) y el Objetivo de Desarrollo Sostenible 16 —relativo a la paz, la justicia y las instituciones sólidas— convergen aquí con el Objetivo de Desarrollo Sostenible 4, referido a una educación de calidad: acompañar espiritualmente a una estudiante no es un gesto meramente privado, sino una forma concreta de contribuir, desde el aula, a la construcción de una sociedad más justa y reconciliada.</p>
+
+                    <div class="tarjeta-destacada">
+                        <strong>Viñeta de intervención pastoral (I.E.M. María Goretti)</strong>
+                        En un escenario de capellanía u orientación escolar, cuando una estudiante expresa angustia frente a su futuro, la respuesta del educador teólogo no radica en soluciones técnicas, sino en una disposición profunda de escucha activa. Acompañar implica "caminar con el otro", dignificándolo y ofreciendo un horizonte de esperanza. En el contexto del María Goretti, este acompañamiento se articula con la capellanía escolar y con el Proyecto Educativo Institucional de la Universidad Mariana, que concibe al educador teólogo no como un técnico de las emociones, sino como cuidador de la vida y sembrador de esperanza en medio de la fragilidad humana.
+                    </div>
+                </div>
+                <div class="imagen-mitad">
+                    <img src="https://images.unsplash.com/photo-1499209974431-9dddcece7f88?q=80&w=800" alt="Persona en actitud de reflexión y paz, simbolizando el cuidado y la espiritualidad">
+                </div>
+            </div>
+        </div>
+
+        <div class="seccion reveal" data-reveal="up" id="conclusion">
+            <h2>Conclusión</h2>
+            <p>En conclusión, el análisis de las competencias socioemocionales devela que su integración en el ámbito educativo trasciende la esfera meramente técnica para instalarse en el terreno de la ética y la teología pastoral. La educación emocional se revela como un imperativo pedagógico indispensable para cumplir con la formación integral.</p>
+            <p>Para el educador teólogo, asumir la ética del cuidado y la espiritualidad del acompañamiento significa reconocer que la enseñanza es un acto de amor y justicia social. El docente deja de ser un simple transmisor de contenidos para erigirse como un mediador de paz, forjando sujetos resilientes, éticos y comprometidos con la construcción de una sociedad más digna y fraterna.</p>
+            <p>Esta reflexión, situada en la experiencia de práctica en el I.E.M. María Goretti de Pasto (Nariño), confirma que la formación en competencias socioemocionales, lejos de ser un añadido curricular, es una exigencia ética reclamada tanto por el marco normativo colombiano —la Constitución, la Ley 115 y la Ley 1620— como por los Objetivos de Desarrollo Sostenible 4 y 16, y por el Proyecto Educativo Institucional que orienta la vocación del educador teólogo formado en la Universidad Mariana.</p>
+        </div>
+
+        <div class="seccion referencias reveal" data-reveal="up" id="referencias">
+            <h2>Referencias</h2>
+            <p>Bisquerra, R. (2009). <em>Educación emocional como proceso pedagógico</em>.</p>
+            <p>Boff, L. (2002). <em>El cuidado esencial</em>.</p>
+            <p>Congreso de la República de Colombia. (1991). <em>Constitución Política de Colombia</em>.</p>
+            <p>Congreso de la República de Colombia. (1994). <em>Ley 115 de 1994. Por la cual se expide la ley general de educación</em>.</p>
+            <p>Congreso de la República de Colombia. (2013). <em>Ley 1620 de 2013. Sistema Nacional de Convivencia Escolar</em>.</p>
+            <p>Freire, P. (1997). <em>La pedagogía de la justicia y la liberación</em>.</p>
+            <p>Goleman, D. (1996). <em>Emotional intelligence</em>.</p>
+            <p>Gutiérrez, G. (2003). <em>Teología de la liberación y la opción por los pobres</em>.</p>
+            <p>Noddings, N. (2003). <em>Ética del cuidado y pedagogía relacional</em>.</p>
+            <p>Programa CASEL. (2020). <em>Modelo integrador de competencias socioemocionales</em>.</p>
+        </div>
+
+    </div>
+
+    <footer>Bitácora del cuidado · Jesús Alejandro Del Castillo Rincón · Universidad Mariana · Pasto, Nariño</footer>
+
+    <button id="backToTop" aria-label="Volver arriba">↑</button>
+
+    <script>
+        // ---------- Barra de progreso ----------
+        const progressBar = document.getElementById('progressBar');
+        function updateProgress() {
+            const h = document.documentElement;
+            const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+            progressBar.style.width = scrolled + '%';
+        }
+        document.addEventListener('scroll', updateProgress, { passive: true });
+        updateProgress();
+
+        // ---------- Revelado multidireccional al hacer scroll ----------
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    io.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+        document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+        // Cascada escalonada para las líneas de referencias
+        document.querySelectorAll('.referencias p').forEach((p, i) => {
+            p.style.transitionDelay = (i * 70) + 'ms';
+        });
+
+        // ---------- Nav con indicador deslizante + scrollspy ----------
+        const navbar = document.getElementById('navbar');
+        const navIndicator = document.getElementById('navIndicator');
+        const navLinks = document.querySelectorAll('.nav-inner a');
+        const navSections = Array.from(navLinks).map(l => document.querySelector(l.getAttribute('href')));
+
+        function moveIndicator(link) {
+            if (!link) return;
+            const navRect = navbar.getBoundingClientRect();
+            const r = link.getBoundingClientRect();
+            navIndicator.style.width = r.width + 'px';
+            navIndicator.style.transform = `translateX(${r.left - navRect.left}px)`;
+        }
+
+        const spy = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const id = '#' + entry.target.id;
+                    const link = document.querySelector(`.nav-inner a[href="${id}"]`);
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    if (link) { link.classList.add('active'); moveIndicator(link); }
+                }
+            });
+        }, { rootMargin: '-35% 0px -55% 0px' });
+        navSections.forEach(s => { if (s) spy.observe(s); });
+
+        window.addEventListener('load', () => moveIndicator(navLinks[0]));
+        window.addEventListener('resize', () => {
+            const active = document.querySelector('.nav-inner a.active') || navLinks[0];
+            moveIndicator(active);
+        });
+
+        // ---------- Autores clave interactivos ----------
+        const autorTextos = {
+            goleman: "Daniel Goleman (1996) identificó cinco dimensiones de la inteligencia emocional —autoconocimiento, autorregulación, motivación, empatía y habilidades sociales— con más peso en la vida cotidiana que el coeficiente intelectual.",
+            bisquerra: "Rafael Bisquerra (2009) define la educación emocional como un proceso pedagógico, continuo y permanente que busca optimizar el desarrollo humano.",
+            noddings: "Nel Noddings (2003) plantea la ética del cuidado basada en la relación, la receptividad y la respuesta a las necesidades del otro.",
+            boff: "Leonardo Boff (2002) aborda el cuidado esencial como un nuevo paradigma de convivencia, compasión y respeto por la vida.",
+            gutierrez: "Gustavo Gutiérrez (2003) reflexiona sobre la teología de la liberación, la opción preferencial por los pobres y el compromiso social.",
+            freire: "Paulo Freire (1997) propone la pedagogía del oprimido y la educación liberadora mediante la praxis y el diálogo crítico."
+        };
+
+        const chips = document.querySelectorAll('.chip');
+        const autorTexto = document.getElementById('autorTexto');
+
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                chips.forEach(c => {
+                    c.classList.remove('active');
+                    c.setAttribute('aria-pressed', 'false');
+                });
+                chip.classList.add('active');
+                chip.setAttribute('aria-pressed', 'true');
+
+                const key = chip.getAttribute('data-autor');
+                if (autorTextos[key]) {
+                    autorTexto.classList.add('fade');
+                    setTimeout(() => {
+                        autorTexto.textContent = autorTextos[key];
+                        autorTexto.classList.remove('fade');
+                    }, 200);
+                }
+            });
+        });
+
+        // ---------- Botón volver arriba ----------
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.classList.add('show');
+            } else {
+                backToTop.classList.remove('show');
+            }
+        });
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+</body>
+</html>
